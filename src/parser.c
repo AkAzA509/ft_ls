@@ -78,6 +78,30 @@ static void	parse_path(char *path, t_param *params) {
 	}
 }
 
+int	name_cmp(const char *a, const char *b) {
+	size_t	i;
+	int		ca;
+	int		cb;
+
+	i = 0;
+	while (a[i] && b[i]) {
+		ca = ft_tolower((unsigned char)a[i]);
+		cb = ft_tolower((unsigned char)b[i]);
+		if (ca != cb)
+			return ca - cb;
+		i++;
+	}
+	if (a[i] || b[i])
+		return (unsigned char)a[i] - (unsigned char)b[i];
+	i = 0;
+	while (a[i] && b[i]) {
+		if ((unsigned char)a[i] != (unsigned char)b[i])
+			return (unsigned char)a[i] - (unsigned char)b[i];
+		i++;
+	}
+	return 0;
+}
+
 static void	sort_paths(char **paths) {
 	size_t count = tab_len(paths);
 
@@ -85,7 +109,7 @@ static void	sort_paths(char **paths) {
 		char *key = paths[i];
 		int j = i - 1;
 		
-		while (j >= 0 && ft_strncmp(paths[j], key, -1) > 0) {
+		while (j >= 0 && name_cmp(paths[j], key) > 0) {
 			paths[j + 1] = paths[j];
 			j--;
 		}

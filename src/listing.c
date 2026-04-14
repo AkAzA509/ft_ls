@@ -59,15 +59,6 @@ static t_entry	*load_entries(DIR *dir, char *dir_path, t_param *params, size_t *
 	return entries;
 }
 
-static int	name_cmp(const char *a, const char *b) {
-	size_t	na = ft_strlen(a);
-	size_t	nb = ft_strlen(b);
-
-	if (na > nb)
-		return (ft_strncmp(a, b, na + 1));
-	return (ft_strncmp(a, b, nb + 1));
-}
-
 static bool	should_shift_time(t_entry left, t_entry right) {
 	if (left.entry_info.st_mtime != right.entry_info.st_mtime)
 		return (left.entry_info.st_mtime < right.entry_info.st_mtime);
@@ -87,7 +78,7 @@ static void	sort_by_time(t_entry *entries, size_t count) {
 	}
 }
 
-static void sort_entries(t_entry *entries, size_t count) {
+static void	sort_entries(t_entry *entries, size_t count) {
 	for (size_t i = 1; i < count; i++) {
 		t_entry key = entries[i];
 		int j = i - 1;
@@ -100,40 +91,94 @@ static void sort_entries(t_entry *entries, size_t count) {
 	}
 }
 
-static void display_size(size_t bytes) {
-	size_t unit, whole, frac, rem;
+static void	display_size(size_t bytes) {
+	size_t		unit;
+	size_t		v10;
+	size_t		whole;
+	size_t		frac;
+	const char	*label;
 
-	if (bytes >= 1024UL * 1024UL) {
-		unit = 1024UL * 1024UL;
-		whole = bytes / unit;
-		rem = bytes % unit;
-		frac = (rem * 10 + unit / 2) / unit;
-		if (frac == 10) {
-			whole += 1;
-			frac = 0;
-		}
-		ft_printf("%zu.%zu MB", whole, frac);
+	if (bytes < 1024UL) {
+		if (bytes < 10)
+			ft_printf("  %zu B  ", bytes);
+		else if (bytes < 100)
+			ft_printf(" %zu B  ", bytes);
+		else
+			ft_printf("%zu B  ", bytes);
+		return ;
 	}
-	else if (bytes >= 1024UL) {
-		unit = 1024UL;
-		whole = bytes / unit;
-		rem = bytes % unit;
-		frac = (rem * 10 + unit / 2) / unit;
-		if (frac == 10) {
-			whole += 1;
-			frac = 0;
-		}
-		ft_printf("%zu.%zu KB", whole, frac);
+	if (bytes >= 1024UL * 1024UL * 1024UL) {
+		unit = 1024UL * 1024UL * 1024UL;
+		label = "GB";
+	}
+	else if (bytes >= 1024UL * 1024UL) {
+		unit = 1024UL * 1024UL;
+		label = "MB";
 	}
 	else {
-		ft_printf("%zu B", bytes);
+		unit = 1024UL;
+		label = "KB";
+	}
+	v10 = (bytes * 10 + unit / 2) / unit;
+	whole = v10 / 10;
+	frac = v10 % 10;
+	if (whole >= 100)
+		ft_printf("%zu %s ", whole, label);
+	else if (whole >= 10)
+		ft_printf(" %zu %s ", whole, label);
+	else
+		ft_printf("%zu.%zu %s ", whole, frac, label);
+}
+
+static void	display_user(uid_t nb) {
+	struct passwd	*pw = getpwuid(nb);
+	char *user = (pw && pw->pw_name) ? pw->pw_name : "?";
+	ft_printf("%s ", user );
+}
+
+static void	display_group(gid_t nb) {
+	struct group	*gr = getgrgid(nb);
+	char *group = (gr && gr->gr_name) ? gr->gr_name : "?";
+	ft_printf("%s ", group);
+}
+
+static void	display_right(struct stat stats) {
+	char right[11];
+
+	right[0] = S_ISDIR(stats.st_mode) ? 'd' : S_ISLNK(stats.st_mode) ? 'l' : '-';
+	right[1] = (stats.st_mode & S_IRUSR) ? 'r' : '-';
+	right[2] = (stats.st_mode & S_IWUSR) ? 'w' : '-';
+	right[3] = (stats.st_mode & S_IXUSR) ? 'x' : '-';
+	right[4] = (stats.st_mode & S_IRGRP) ? 'r' : '-';
+	right[5] = (stats.st_mode & S_IWGRP) ? 'w' : '-';
+	right[6] = (stats.st_mode & S_IXGRP) ? 'x' : '-';
+	right[7] = (stats.st_mode & S_IROTH) ? 'r' : '-';
+	right[8] = (stats.st_mode & S_IWOTH) ? 'w' : '-';
+	right[9] = (stats.st_mode & S_IXOTH) ? 'x' : '-';
+	right[10] = '\0';
+
+	ft_printf("%s ", right);
+}
+
+static void	display_date(struct stat stats) {
+	time_t	timer = stats.st_mtime;
+	
+	char	*time = ctime(&timer);
+	if (time) {
+		size_t len = ft_strlen(time);
+		if (len > 0 && time[len - 1] == '\n')
+			time[len - 1] = '\0';
+		ft_printf("%s", time);
 	}
 }
 
 static void	display_long_entry(int start, int end, int step, t_entry *entries) {
 	for (int i = start; i != end; i += step) {
-		// char *group, *user = NULL;
+		display_right(entries[i].entry_info);
+		display_user(entries[i].entry_info.st_uid);
+		display_group(entries[i].entry_info.st_gid);
 		display_size(entries[i].entry_info.st_size);
+		display_date(entries[i].entry_info);
 		ft_printf(" %s\n", entries[i].name);
 	}
 }

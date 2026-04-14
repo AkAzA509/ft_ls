@@ -2,6 +2,10 @@
 
 #include <unistd.h>
 #include <sys/stat.h>
+#include <sys/types.h>
+#include <grp.h>
+#include <pwd.h>
+#include <time.h>
 #include <dirent.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -46,6 +50,7 @@ void	print_error_args(char arg);
 // parsing
 void	parse_parameter(char *av[], t_param *params);
 size_t	tab_len(char **tab);
+int		name_cmp(const char *a, const char *b) ;
 
 // cleaning
 void	exiting(int code, t_param *params);
