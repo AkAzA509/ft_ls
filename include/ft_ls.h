@@ -39,4 +39,7 @@ void	print_error(char* msg);
 void	print_error_args(char arg);
 
 // parsing
-void	parse_parameter(char *av[]);
+void	parse_parameter(char *av[], t_param *params);
+
+// cleaning
+void	exiting(int code, t_param *params);

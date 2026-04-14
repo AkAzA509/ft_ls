@@ -34,7 +34,7 @@ static bool	push_back_path(t_param *params, const char *path) {
 	return true;
 }
 
-static bool	parse_options(char *option, t_param *params) {
+static void	parse_options(char *option, t_param *params) {
 	bool is_help = false;
 
 	while (*option) {
@@ -52,81 +52,56 @@ static bool	parse_options(char *option, t_param *params) {
 			is_help = true;
 		else {
 			print_error_args(*option);
-			return false;
+			exiting(2, params);
 		}
 		++option;
 	}
 
 	if (is_help) {
 		print_help();
-		return false;
+		exiting(0, params);
 	}
-	return true;
 }
 
-static bool	parse_path(char *path, t_param *params) {
+static void	parse_path(char *path, t_param *params) {
 	struct stat stats;
 	if (stat(path, &stats)) {
-		perror("stat error: ");
+		perror("stat error: "); // a changer pour un bon message d'erreur
 		params->exit_code = 2;
-		return true;
+		return ;
 	}
 	if (!push_back_path(params, path)) {
-		print_error("malloc failed while storing path");
-		return false;
+		print_error("malloc failed\n");
+		exiting(1, params);
 	}
-	return true;
 }
 
-static void	free_paths(char **paths) {
-	size_t i = 0;
-
-	if (!paths)
-		return;
-	while (paths[i]) {
-		free(paths[i]);
-		i++;
-	}
-	free(paths);
-}
-
-void	parse_parameter(char *av[]) {
-	t_param params = {
-		.a_opt = false,
-		.R_opt = false,
-		.r_opt = false,
-		.l_opt = false,
-		.t_opt = false,
-		.path = NULL
-	};
-
+void	parse_parameter(char *av[], t_param *params) {
 	while (*av) {
-		if (*av && **av == '-') {
-			if (!parse_options(*av + 1, &params))
-				break;
-		}
+		if (*av && **av == '-')
+			parse_options(*av + 1, params);
 		else if (*av && **av != '-')
-			if (!parse_path(*av, &params))
-				break;
+			parse_path(*av, params);
 		av++;
 	}
 
+	if (!params->path && params->exit_code == 0) {
+		if (!push_back_path(params, "."))
+			print_error("malloc failed\n");
+	}
+	else if (!params->path && params->exit_code > 0)
+		exiting(params->exit_code, params);
+
 	ft_printf("Params check: a:%s, R:%s, l:%s, r:%s, t:%s\n",
-		params.a_opt ? "true" : "false",
-		params.R_opt ? "true" : "false",
-		params.l_opt ? "true" : "false",
-		params.r_opt ? "true" : "false",
-		params.t_opt ? "true" : "false"
+		params->a_opt ? "true" : "false",
+		params->R_opt ? "true" : "false",
+		params->l_opt ? "true" : "false",
+		params->r_opt ? "true" : "false",
+		params->t_opt ? "true" : "false"
 	);
 
-	if (params.path) {
-		size_t i = 0;
-
-		while (params.path[i]) {
-			ft_printf("%s\n", params.path[i]);
-			i++;
-		}
+	if (params->path) {
+		for (size_t i = 0; params->path[i]; i++)
+			ft_printf("%s\n", params->path[i]);
 	}
-	free_paths(params.path);
-
 }
