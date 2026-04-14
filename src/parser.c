@@ -1,6 +1,6 @@
 #include "../include/ft_ls.h"
 
-static size_t	path_count(char **tab) {
+size_t	tab_len(char **tab) {
 	size_t i = 0;
 
 	if (!tab)
@@ -15,7 +15,7 @@ static bool	push_back_path(t_param *params, const char *path) {
 	size_t i = 0;
 	size_t count;
 
-	count = path_count(params->path);
+	count = tab_len(params->path);
 	new_tab = malloc(sizeof(char *) * (count + 2));
 	if (!new_tab)
 		return false;
@@ -66,13 +66,30 @@ static void	parse_options(char *option, t_param *params) {
 static void	parse_path(char *path, t_param *params) {
 	struct stat stats;
 	if (stat(path, &stats)) {
-		perror("stat error: "); // a changer pour un bon message d'erreur
+		char *msg = ft_strjoin(path, ": No such file or directory (os error 2).\n\n");
+		print_error(msg);
+		free(msg);
 		params->exit_code = 2;
 		return ;
 	}
 	if (!push_back_path(params, path)) {
 		print_error("malloc failed\n");
 		exiting(1, params);
+	}
+}
+
+static void	sort_paths(char **paths) {
+	size_t count = tab_len(paths);
+
+	for (size_t i = 1; i < count; i++) {
+		char *key = paths[i];
+		int j = i - 1;
+		
+		while (j >= 0 && ft_strncmp(paths[j], key, -1) > 0) {
+			paths[j + 1] = paths[j];
+			j--;
+		}
+		paths[j + 1] = key;
 	}
 }
 
@@ -92,16 +109,19 @@ void	parse_parameter(char *av[], t_param *params) {
 	else if (!params->path && params->exit_code > 0)
 		exiting(params->exit_code, params);
 
-	ft_printf("Params check: a:%s, R:%s, l:%s, r:%s, t:%s\n",
-		params->a_opt ? "true" : "false",
-		params->R_opt ? "true" : "false",
-		params->l_opt ? "true" : "false",
-		params->r_opt ? "true" : "false",
-		params->t_opt ? "true" : "false"
-	);
+	if (params->path)
+		sort_paths(params->path);
 
-	if (params->path) {
-		for (size_t i = 0; params->path[i]; i++)
-			ft_printf("%s\n", params->path[i]);
-	}
+	// ft_printf("Params check: a:%s, R:%s, l:%s, r:%s, t:%s\n",
+	// 	params->a_opt ? "true" : "false",
+	// 	params->R_opt ? "true" : "false",
+	// 	params->l_opt ? "true" : "false",
+	// 	params->r_opt ? "true" : "false",
+	// 	params->t_opt ? "true" : "false"
+	// );
+
+	// if (params->path) {
+	// 	for (size_t i = 0; params->path[i]; i++)
+	// 		ft_printf("%s\n", params->path[i]);
+	// }
 }

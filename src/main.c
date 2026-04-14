@@ -4,10 +4,8 @@ static void	free_split(char **tab)
 {
 	if (!tab)
 		return;
-	while (*tab) {
-		free(*tab);
-		tab++;
-	}
+	for (size_t i = 0; tab[i]; i++)
+		free(tab[i]);
 	free(tab);
 }
 
@@ -33,18 +31,7 @@ int main(int ac, char*av[]) {
 	
 	parse_parameter(++av, &params);
 
-	// stat(2);
+	listing(&params);
 
-	// DIR	*dir = opendir(".");
-	// if (!dir)
-	// 	return printf("error\n");
-
-	// struct dirent	*entry;
-	// while ((entry = readdir(dir)) != NULL) {
-	// 	// printf("%d\t%s\n", entry->d_type, entry->d_name);
-	// 	printf("%s  ", entry->d_name);
-	// }
-
-	// closedir(dir);
-	return params.exit_code;
+	exiting(params.exit_code, &params);
 }

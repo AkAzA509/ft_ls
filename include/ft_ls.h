@@ -23,6 +23,11 @@
 #define BLD_GREEN BOLD GREEN
 #define BLD_PURPLE BOLD PURPLE
 
+typedef struct s_entry {
+	char			*name;
+	struct stat		entry_info;
+}					t_entry;
+
 typedef struct s_param {
 	char			**path;
 	bool			l_opt;
@@ -40,6 +45,10 @@ void	print_error_args(char arg);
 
 // parsing
 void	parse_parameter(char *av[], t_param *params);
+size_t	tab_len(char **tab);
 
 // cleaning
 void	exiting(int code, t_param *params);
+
+// listing
+void	listing(t_param *params);

@@ -4,7 +4,8 @@ CFLAGS		:= -Wall -Wextra -Werror -g3 -O2 -fsanitize=address,leak
 SRC_PATH	:= src/
 SRC			:= $(SRC_PATH)main.c \
 			   ${SRC_PATH}parser.c \
-			   $(SRC_PATH)print.c
+			   $(SRC_PATH)print.c \
+			   $(SRC_PATH)listing.c
 
 INC			:= -Iinclude -Isrc/libft/include
 LIBFT_DIR	:= src/libft

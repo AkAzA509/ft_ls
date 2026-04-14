@@ -23,3 +23,4 @@ void	print_error_args(char arg) {
 	ft_printf("Usage: ft_ls [OPTIONS] [FILE]...\n\n");
 	ft_printf("For more information, try '-h'.\n");
 }
+
