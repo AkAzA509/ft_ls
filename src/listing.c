@@ -15,8 +15,7 @@ static t_entry	*load_entries(DIR *dir, char *dir_path, t_param *params, size_t *
 		if (!params->a_opt && entry->d_name[0] == '.')
 			continue;
 
-		if (*count >= capacity)
-		{
+		if (*count >= capacity) {
 			capacity *= 2;
 			t_entry *new_entries = malloc(sizeof(t_entry) * capacity);
 			if (!new_entries) {
@@ -33,6 +32,7 @@ static t_entry	*load_entries(DIR *dir, char *dir_path, t_param *params, size_t *
 			free(entries);
 			return NULL;
 		}
+
 		char *full_path = ft_strjoin(tmp_path, entry->d_name);
 		free(tmp_path);
 		if (!full_path) {
@@ -113,26 +113,24 @@ static size_t	size_digits(size_t n) {
 		n /= 10;
 		d++;
 	}
-	return (d);
+	return d;
 }
 
 static size_t	max_size_width(t_entry *entries, size_t count) {
-	size_t max_width;
+	size_t max_width = 1;
 	size_t current;
 
-	max_width = 1;
 	for (size_t i = 0; i < count; i++) {
 		current = size_digits((size_t)entries[i].entry_info.st_size);
 		if (current > max_width)
 			max_width = current;
 	}
-	return (max_width);
+	return max_width;
 }
 
 static void	display_size(size_t bytes, size_t width) {
-	size_t current;
+	size_t current = size_digits(bytes);
 
-	current = size_digits(bytes);
 	while (current < width) {
 		ft_printf(" ");
 		current++;
@@ -193,20 +191,25 @@ static void	display_total(int start, int end, int step, t_entry *entries) {
 	ft_printf("total %zu\n", total);
 }
 
-static void	display_long_entry(int start, int end, int step, t_entry *entries, size_t size_width) {
-	display_total(start, end, step, entries);
+static void	display_long_entry(int start, int end, int step, t_entry *entries, size_t size_width, int flag) {
+	if (!flag)
+		display_total(start, end, step, entries);
+
 	for (int i = start; i != end; i += step) {
 		bool is_link = display_right(entries[i].entry_info);
+
 		display_user(entries[i].entry_info.st_uid);
 		display_group(entries[i].entry_info.st_gid);
 		display_size((size_t)entries[i].entry_info.st_size, size_width);
 		display_date(entries[i].entry_info);
+
 		if (S_ISDIR(entries[i].entry_info.st_mode))
 			ft_printf(BLD_BLUE" %s"RESET, entries[i].name);
 		else
 			ft_printf(BLD_WHITE" %s"RESET, entries[i].name);
+
 		if (is_link) {
-			char target[10000];
+			char target[4000];
 			ssize_t len = readlink(entries[i].name, target, sizeof(target) - 1);
 			if (len != -1)
 				target[len] = '\0';
@@ -216,26 +219,19 @@ static void	display_long_entry(int start, int end, int step, t_entry *entries, s
 	}
 }
 
-static void display_entries(t_entry *entries, size_t count, bool multi_dir, t_param *param) {
-	int start, end, step;
+static void display_entries(t_entry *entries, size_t count, t_param *param) {
+	int start = 0, end = count, step = 1;
 	size_t size_width;
-
-	(void)multi_dir;
 
 	if (param->r_opt) {
 		start = (int)count - 1;
 		end = -1;
 		step = -1;
 	}
-	else {
-		start = 0;
-		end = (int)count;
-		step = 1;
-	}
 
 	if (param->l_opt) {
 		size_width = max_size_width(entries, count);
-		display_long_entry(start, end, step, entries, size_width);
+		display_long_entry(start, end, step, entries, size_width, false);
 	}
 	else {
 		for (int i = start; i != end; i += step) {
@@ -244,8 +240,8 @@ static void display_entries(t_entry *entries, size_t count, bool multi_dir, t_pa
 			else
 				ft_printf(BLD_WHITE"%s  "RESET, entries[i].name);
 		}
+		ft_printf("\n");
 	}
-	// ft_printf("%s", multi_dir ? "\n" : "\n");
 }
 
 static void free_entries(t_entry *entries, size_t count)
@@ -255,21 +251,15 @@ static void free_entries(t_entry *entries, size_t count)
 	free(entries);
 }
 
-void listing(t_param *params)
-{
-	char	**path_tab = params->path;
-	int		path_count = tab_len(path_tab);
-	struct stat stats;
+static void	handle_file(int path_count, char **path_tab, t_param *params) {
 	t_entry *files = malloc(sizeof(t_entry) * path_count);
-	size_t	files_count = 0;
-	int		start;
-	int		end;
-	int		step;
-
 	if (!files) {
 		print_error("malloc failed\n");
 		return;
 	}
+
+	struct	stat stats;
+	size_t	files_count = 0;
 
 	for (int i = 0; i < path_count; i++) {
 		if (lstat(path_tab[i], &stats) != 0) {
@@ -280,12 +270,11 @@ void listing(t_param *params)
 		if (!S_ISDIR(stats.st_mode)) {
 			files[files_count].name = ft_strdup(path_tab[i]);
 			if (files[files_count].name) {
-				memcpy(&files[files_count].entry_info, &stats, sizeof(struct stat));
+				ft_memcpy(&files[files_count].entry_info, &stats, sizeof(struct stat));
 				files_count++;
 			}
 		}
 	}
-
 	if (files_count > 0) {
 		if (params->t_opt)
 			sort_by_time(files, files_count);
@@ -293,22 +282,18 @@ void listing(t_param *params)
 			sort_entries(files, files_count);
 	}
 
-	// Display files
+	int		start = 0, end = files_count, step = 1;
+
 	if (params->r_opt) {
 		start = (int)files_count - 1;
 		end = -1;
 		step = -1;
 	}
-	else {
-		start = 0;
-		end = (int)files_count;
-		step = 1;
-	}
 
 	if (files_count > 0) {
 		if (params->l_opt) {
 			size_t size_width = max_size_width(files, files_count);
-			display_long_entry(start, end, step, files, size_width);
+			display_long_entry(start, end, step, files, size_width, true);
 		}
 		else {
 			for (int i = start; i != end; i += step) {
@@ -324,17 +309,23 @@ void listing(t_param *params)
 	for (size_t i = 0; i < files_count; i++)
 		free(files[i].name);
 	free(files);
+}
+
+void listing(t_param *params) {
+	char		**path_tab = params->path;
+	int			path_count = tab_len(path_tab);
+	struct stat	stats;
+	int			start = 0,
+				end = path_count,
+				step = 1;
+
+	handle_file(path_count, path_tab, params);
 
 	bool multi_dir = path_count > 1 ? true : false;
 	if (params->r_opt) {
 		start = path_count - 1;
 		end = -1;
 		step = -1;
-	}
-	else {
-		start = 0;
-		end = path_count;
-		step = 1;
 	}
 
 	for (int i = start; i != end; i += step) {
@@ -363,10 +354,10 @@ void listing(t_param *params)
 		else
 			sort_entries(entries, count);
 
-		if(multi_dir || files_count > 0)
+		if(multi_dir > 0)
 			ft_printf("\n%s:\n", path_tab[i]);
 
-		display_entries(entries, count, multi_dir || files_count > 0, params);
+		display_entries(entries, count, params);
 		free_entries(entries, count);
 	}
 }
