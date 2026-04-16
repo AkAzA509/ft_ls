@@ -80,23 +80,34 @@ static void	parse_path(char *path, t_param *params) {
 
 int	name_cmp(const char *a, const char *b) {
 	size_t	i;
-	int		ca;
-	int		cb;
+	int		ca, cb;
+	const char *a_cmp = a;
+	const char *b_cmp = b;
+
+	// Skip leading dots for both strings (except for . and ..)
+	if (a[0] == '.' && a[1] != '\0' && a[1] != '.') {
+		while (*a_cmp == '.')
+			a_cmp++;
+	}
+	if (b[0] == '.' && b[1] != '\0' && b[1] != '.') {
+		while (*b_cmp == '.')
+			b_cmp++;
+	}
 
 	i = 0;
-	while (a[i] && b[i]) {
-		ca = ft_tolower((unsigned char)a[i]);
-		cb = ft_tolower((unsigned char)b[i]);
+	while (a_cmp[i] && b_cmp[i]) {
+		ca = ft_tolower((unsigned char)a_cmp[i]);
+		cb = ft_tolower((unsigned char)b_cmp[i]);
 		if (ca != cb)
 			return ca - cb;
 		i++;
 	}
-	if (a[i] || b[i])
-		return (unsigned char)a[i] - (unsigned char)b[i];
+	if (a_cmp[i] || b_cmp[i])
+		return (unsigned char)a_cmp[i] - (unsigned char)b_cmp[i];
 	i = 0;
-	while (a[i] && b[i]) {
-		if ((unsigned char)a[i] != (unsigned char)b[i])
-			return (unsigned char)a[i] - (unsigned char)b[i];
+	while (a_cmp[i] && b_cmp[i]) {
+		if ((unsigned char)a_cmp[i] != (unsigned char)b_cmp[i])
+			return (unsigned char)a_cmp[i] - (unsigned char)b_cmp[i];
 		i++;
 	}
 	return 0;
