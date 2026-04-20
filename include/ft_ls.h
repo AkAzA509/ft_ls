@@ -50,10 +50,12 @@ void	print_error_args(char arg);
 // parsing
 void	parse_parameter(char *av[], t_param *params);
 size_t	tab_len(char **tab);
-int		name_cmp(const char *a, const char *b) ;
+int		name_cmp(const char *a, const char *b);
+char	**push_back_path(char **tab, const char *path);
 
 // cleaning
 void	exiting(int code, t_param *params);
+void	free_split(char **tab);
 
 // listing
 void	listing(t_param *params);

@@ -10,28 +10,52 @@ size_t	tab_len(char **tab) {
 	return i;
 }
 
-static bool	push_back_path(t_param *params, const char *path) {
+// static bool	push_back_path(t_param *params, const char *path) {
+// 	char	**new_tab;
+// 	size_t i = 0;
+// 	size_t count;
+
+// 	count = tab_len(params->path);
+// 	new_tab = malloc(sizeof(char *) * (count + 2));
+// 	if (!new_tab)
+// 		return false;
+// 	while (i < count) {
+// 		new_tab[i] = params->path[i];
+// 		i++;
+// 	}
+// 	new_tab[count] = ft_strdup(path);
+// 	if (!new_tab[count]) {
+// 		free(new_tab);
+// 		return false;
+// 	}
+// 	new_tab[count + 1] = NULL;
+// 	free(params->path);
+// 	params->path = new_tab;
+// 	return true;
+// }
+
+char	**push_back_path(char **tab, const char *path) {
 	char	**new_tab;
 	size_t i = 0;
 	size_t count;
 
-	count = tab_len(params->path);
+	count = tab_len(tab);
 	new_tab = malloc(sizeof(char *) * (count + 2));
 	if (!new_tab)
-		return false;
+		return NULL;
 	while (i < count) {
-		new_tab[i] = params->path[i];
+		new_tab[i] = tab[i];
 		i++;
 	}
 	new_tab[count] = ft_strdup(path);
 	if (!new_tab[count]) {
 		free(new_tab);
-		return false;
+		return NULL;
 	}
 	new_tab[count + 1] = NULL;
-	free(params->path);
-	params->path = new_tab;
-	return true;
+	free(tab);
+	tab = new_tab;
+	return tab;
 }
 
 static void	parse_options(char *option, t_param *params) {
@@ -72,7 +96,8 @@ static void	parse_path(char *path, t_param *params) {
 		params->exit_code = 2;
 		return ;
 	}
-	if (!push_back_path(params, path)) {
+	params->path = push_back_path(params->path, path);
+	if (!params->path) {
 		print_error("malloc failed\n");
 		exiting(1, params);
 	}
@@ -84,7 +109,6 @@ int	name_cmp(const char *a, const char *b) {
 	const char *a_cmp = a;
 	const char *b_cmp = b;
 
-	// Skip leading dots for both strings (except for . and ..)
 	if (a[0] == '.' && a[1] != '\0' && a[1] != '.') {
 		while (*a_cmp == '.')
 			a_cmp++;
@@ -138,7 +162,8 @@ void	parse_parameter(char *av[], t_param *params) {
 	}
 
 	if (!params->path && params->exit_code == 0) {
-		if (!push_back_path(params, "."))
+		params->path = push_back_path(params->path, ".");
+		if (!params->path)
 			print_error("malloc failed\n");
 	}
 	else if (!params->path && params->exit_code > 0)

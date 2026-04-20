@@ -1,6 +1,6 @@
 #include "../include/ft_ls.h"
 
-static void	free_split(char **tab)
+void	free_split(char **tab)
 {
 	if (!tab)
 		return;

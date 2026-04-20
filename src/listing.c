@@ -191,10 +191,11 @@ static void	display_total(int start, int end, int step, t_entry *entries) {
 	ft_printf("total %zu\n", total);
 }
 
-static void	display_long_entry(int start, int end, int step, t_entry *entries, size_t size_width, int flag) {
+static char	**display_long_entry(int start, int end, int step, t_entry *entries, size_t size_width, int flag) {
 	if (!flag)
 		display_total(start, end, step, entries);
 
+	char	**dir = NULL;
 	for (int i = start; i != end; i += step) {
 		bool is_link = display_right(entries[i].entry_info);
 
@@ -203,8 +204,10 @@ static void	display_long_entry(int start, int end, int step, t_entry *entries, s
 		display_size((size_t)entries[i].entry_info.st_size, size_width);
 		display_date(entries[i].entry_info);
 
-		if (S_ISDIR(entries[i].entry_info.st_mode))
+		if (S_ISDIR(entries[i].entry_info.st_mode)) {
 			ft_printf(BLD_BLUE" %s"RESET, entries[i].name);
+				dir = push_back_path(dir, entries[i].name);
+		}
 		else
 			ft_printf(BLD_WHITE" %s"RESET, entries[i].name);
 
@@ -217,11 +220,13 @@ static void	display_long_entry(int start, int end, int step, t_entry *entries, s
 		}
 		ft_printf("\n");
 	}
+	return dir;
 }
 
-static void display_entries(t_entry *entries, size_t count, t_param *param) {
+static char	**display_entries(t_entry *entries, size_t count, t_param *param) {
 	int start = 0, end = count, step = 1;
 	size_t size_width;
+	char	**dir = NULL;
 
 	if (param->r_opt) {
 		start = (int)count - 1;
@@ -231,17 +236,20 @@ static void display_entries(t_entry *entries, size_t count, t_param *param) {
 
 	if (param->l_opt) {
 		size_width = max_size_width(entries, count);
-		display_long_entry(start, end, step, entries, size_width, false);
+		dir = display_long_entry(start, end, step, entries, size_width, false);
 	}
 	else {
 		for (int i = start; i != end; i += step) {
-			if (S_ISDIR(entries[i].entry_info.st_mode))
+			if (S_ISDIR(entries[i].entry_info.st_mode)) {
 				ft_printf(BLD_BLUE"%s  "RESET, entries[i].name);
+				dir = push_back_path(dir, entries[i].name);
+			}
 			else
 				ft_printf(BLD_WHITE"%s  "RESET, entries[i].name);
 		}
 		ft_printf("\n");
 	}
+	return dir;
 }
 
 static void free_entries(t_entry *entries, size_t count)
@@ -311,13 +319,49 @@ static void	handle_file(int path_count, char **path_tab, t_param *params) {
 	free(files);
 }
 
+static void	handle_dir(char *path, t_param *params, bool multi_dir) {
+	DIR *dir = opendir(path);
+	if (!dir) {
+		print_error("opendir failed\n");
+		return;
+	}
+
+	size_t count = 0;
+	t_entry *entries = load_entries(dir, path, params, &count);
+	closedir(dir);
+
+	if (!entries) {
+		print_error("malloc failed\n");
+		return;
+	}
+
+	if (params->t_opt)
+		sort_by_time(entries, count);
+	else
+		sort_entries(entries, count);
+
+	if(multi_dir > 0 || params->R_opt)
+		ft_printf("\n%s:\n", path);
+
+	char	**recursive = display_entries(entries, count, params);
+	if (params->R_opt && recursive) {
+		for (size_t i = 0; recursive[i]; i++) {
+			char	*tmp_path = ft_strjoin(path, "/");
+			char	*full_path = ft_strjoin(tmp_path, recursive[i]);
+			free(tmp_path);
+			handle_dir(full_path, params, multi_dir);
+			free(full_path);
+		}
+	}
+	free_split(recursive);
+	free_entries(entries, count);
+}
+
 void listing(t_param *params) {
 	char		**path_tab = params->path;
 	int			path_count = tab_len(path_tab);
 	struct stat	stats;
-	int			start = 0,
-				end = path_count,
-				step = 1;
+	int			start = 0, end = path_count, step = 1;
 
 	handle_file(path_count, path_tab, params);
 
@@ -333,31 +377,6 @@ void listing(t_param *params) {
 			continue;
 		if (!S_ISDIR(stats.st_mode))
 			continue;
-
-		DIR *dir = opendir(path_tab[i]);
-		if (!dir) {
-			print_error("opendir failed\n");
-			continue;
-		}
-
-		size_t count = 0;
-		t_entry *entries = load_entries(dir, path_tab[i], params, &count);
-		closedir(dir);
-
-		if (!entries) {
-			print_error("malloc failed\n");
-			continue;
-		}
-
-		if (params->t_opt)
-			sort_by_time(entries, count);
-		else
-			sort_entries(entries, count);
-
-		if(multi_dir > 0)
-			ft_printf("\n%s:\n", path_tab[i]);
-
-		display_entries(entries, count, params);
-		free_entries(entries, count);
+		handle_dir(path_tab[i], params, multi_dir);
 	}
 }
