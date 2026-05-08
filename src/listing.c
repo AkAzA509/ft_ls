@@ -128,6 +128,18 @@ static size_t	max_size_width(t_entry *entries, size_t count) {
 	return max_width;
 }
 
+static size_t max_link_width(t_entry *entries, size_t count) {
+	size_t max_width = 1;
+	size_t current;
+
+	for (size_t i = 0; i < count; i++) {
+		current = size_digits((size_t)entries[i].entry_info.st_nlink);
+		if (current > max_width)
+			max_width = current;
+	}
+	return max_width;
+}
+
 static void	display_size(size_t bytes, size_t width) {
 	size_t current = size_digits(bytes);
 
@@ -150,7 +162,7 @@ static void	display_group(gid_t nb) {
 	ft_printf("%s ", group);
 }
 
-static bool	display_right(struct stat stats) {
+static bool	display_right(struct stat stats, size_t width) {
 	char right[11];
 
 	right[0] = S_ISDIR(stats.st_mode) ? 'd' : S_ISLNK(stats.st_mode) ? 'l' : '-';
@@ -165,7 +177,13 @@ static bool	display_right(struct stat stats) {
 	right[9] = (stats.st_mode & S_IXOTH) ? 'x' : '-';
 	right[10] = '\0';
 
-	ft_printf("%s %d ", right, stats.st_nlink);
+	ft_printf("%s ", right);
+	size_t digits = size_digits((size_t)stats.st_nlink);
+	while (digits < width) {
+		ft_printf(" ");
+		digits++;
+	}
+	ft_printf("%zu ", (size_t)stats.st_nlink);
 	if (right[0] == 'l')
 		return true;
 	return false;
@@ -191,13 +209,13 @@ static void	display_total(int start, int end, int step, t_entry *entries) {
 	ft_printf("total %zu\n", total);
 }
 
-static char	**display_long_entry(int start, int end, int step, t_entry *entries, size_t size_width, int flag) {
+static char	**display_long_entry(int start, int end, int step, t_entry *entries, size_t size_width, size_t link_width, int flag) {
 	if (!flag)
 		display_total(start, end, step, entries);
 
 	char	**dir = NULL;
 	for (int i = start; i != end; i += step) {
-		bool is_link = display_right(entries[i].entry_info);
+		bool is_link = display_right(entries[i].entry_info, link_width);
 
 		display_user(entries[i].entry_info.st_uid);
 		display_group(entries[i].entry_info.st_gid);
@@ -236,7 +254,8 @@ static char	**display_entries(t_entry *entries, size_t count, t_param *param) {
 
 	if (param->l_opt) {
 		size_width = max_size_width(entries, count);
-		dir = display_long_entry(start, end, step, entries, size_width, false);
+		size_t link_width = max_link_width(entries, count);
+		dir = display_long_entry(start, end, step, entries, size_width, link_width, false);
 	}
 	else {
 		for (int i = start; i != end; i += step) {
@@ -301,7 +320,8 @@ static void	handle_file(int path_count, char **path_tab, t_param *params) {
 	if (files_count > 0) {
 		if (params->l_opt) {
 			size_t size_width = max_size_width(files, files_count);
-			display_long_entry(start, end, step, files, size_width, true);
+			size_t link_width = max_link_width(files, files_count);
+			display_long_entry(start, end, step, files, size_width, link_width, true);
 		}
 		else {
 			for (int i = start; i != end; i += step) {
