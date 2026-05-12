@@ -1,5 +1,7 @@
 #include "../include/ft_ls.h"
 
+static void	parse_path(char *path, t_param *params);
+
 size_t	tab_len(char **tab) {
 	size_t i = 0;
 
@@ -9,30 +11,6 @@ size_t	tab_len(char **tab) {
 		i++;
 	return i;
 }
-
-// static bool	push_back_path(t_param *params, const char *path) {
-// 	char	**new_tab;
-// 	size_t i = 0;
-// 	size_t count;
-
-// 	count = tab_len(params->path);
-// 	new_tab = malloc(sizeof(char *) * (count + 2));
-// 	if (!new_tab)
-// 		return false;
-// 	while (i < count) {
-// 		new_tab[i] = params->path[i];
-// 		i++;
-// 	}
-// 	new_tab[count] = ft_strdup(path);
-// 	if (!new_tab[count]) {
-// 		free(new_tab);
-// 		return false;
-// 	}
-// 	new_tab[count + 1] = NULL;
-// 	free(params->path);
-// 	params->path = new_tab;
-// 	return true;
-// }
 
 char	**push_back_path(char **tab, const char *path) {
 	char	**new_tab;
@@ -60,6 +38,11 @@ char	**push_back_path(char **tab, const char *path) {
 
 static void	parse_options(char *option, t_param *params) {
 	bool is_help = false;
+
+	if (ft_strlen(option) == 0) {
+		parse_path(option - 1, params);
+		return ;
+	}
 
 	while (*option) {
 		if (*option == 'a')
@@ -90,7 +73,9 @@ static void	parse_options(char *option, t_param *params) {
 static void	parse_path(char *path, t_param *params) {
 	struct stat stats;
 	if (stat(path, &stats)) {
-		char *msg = ft_strjoin(path, ": No such file or directory (os error 2).\n\n");
+		char *tmp = ft_strjoin("cannot access ", path);
+		char *msg = ft_strjoin(tmp, ": No such file or directory\n\n");
+		free(tmp);
 		print_error(msg);
 		free(msg);
 		params->exit_code = 2;
@@ -172,16 +157,16 @@ void	parse_parameter(char *av[], t_param *params) {
 	if (params->path)
 		sort_paths(params->path);
 
-	// ft_printf("Params check: a:%s, R:%s, l:%s, r:%s, t:%s\n",
-	// 	params->a_opt ? "true" : "false",
-	// 	params->R_opt ? "true" : "false",
-	// 	params->l_opt ? "true" : "false",
-	// 	params->r_opt ? "true" : "false",
-	// 	params->t_opt ? "true" : "false"
-	// );
+	ft_printf("Params check: a:%s, R:%s, l:%s, r:%s, t:%s\n",
+		params->a_opt ? "true" : "false",
+		params->R_opt ? "true" : "false",
+		params->l_opt ? "true" : "false",
+		params->r_opt ? "true" : "false",
+		params->t_opt ? "true" : "false"
+	);
 
-	// if (params->path) {
-	// 	for (size_t i = 0; params->path[i]; i++)
-	// 		ft_printf("%s\n", params->path[i]);
-	// }
+	if (params->path) {
+		for (size_t i = 0; params->path[i]; i++)
+			ft_printf("%s\n", params->path[i]);
+	}
 }
