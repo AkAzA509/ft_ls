@@ -278,6 +278,12 @@ static void free_entries(t_entry *entries, size_t count)
 	free(entries);
 }
 
+static bool	is_dot_entry(const char *name)
+{
+	return (name && name[0] == '.'
+		&& (name[1] == '\0' || (name[1] == '.' && name[2] == '\0')));
+}
+
 static void	handle_file(int path_count, char **path_tab, t_param *params) {
 	t_entry *files = malloc(sizeof(t_entry) * path_count);
 	if (!files) {
@@ -366,6 +372,8 @@ static void	handle_dir(char *path, t_param *params, bool multi_dir) {
 	char	**recursive = display_entries(entries, count, params);
 	if (params->R_opt && recursive) {
 		for (size_t i = 0; recursive[i]; i++) {
+			if (is_dot_entry(recursive[i]))
+				continue;
 			char	*tmp_path = ft_strjoin(path, "/");
 			char	*full_path = ft_strjoin(tmp_path, recursive[i]);
 			free(tmp_path);
