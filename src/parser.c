@@ -157,16 +157,16 @@ void	parse_parameter(char *av[], t_param *params) {
 	if (params->path)
 		sort_paths(params->path);
 
-	ft_printf("Params check: a:%s, R:%s, l:%s, r:%s, t:%s\n",
-		params->a_opt ? "true" : "false",
-		params->R_opt ? "true" : "false",
-		params->l_opt ? "true" : "false",
-		params->r_opt ? "true" : "false",
-		params->t_opt ? "true" : "false"
-	);
+	// ft_printf("Params check: a:%s, R:%s, l:%s, r:%s, t:%s\n",
+	// 	params->a_opt ? "true" : "false",
+	// 	params->R_opt ? "true" : "false",
+	// 	params->l_opt ? "true" : "false",
+	// 	params->r_opt ? "true" : "false",
+	// 	params->t_opt ? "true" : "false"
+	// );
 
-	if (params->path) {
-		for (size_t i = 0; params->path[i]; i++)
-			ft_printf("%s\n", params->path[i]);
-	}
+	// if (params->path) {
+	// 	for (size_t i = 0; params->path[i]; i++)
+	// 		ft_printf("%s\n", params->path[i]);
+	// }
 }
