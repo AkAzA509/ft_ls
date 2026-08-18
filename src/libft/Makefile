@@ -14,7 +14,7 @@ NAME = libft.a
 
 CC = cc
 
-CFLAGS = -Wextra -Werror -Wall -g3
+CFLAGS = -Wextra -Werror -Wall
 
 GREEN = \033[0;32m
 RESET = \033[0m
@@ -79,23 +79,23 @@ OBJSBS = $(SRCSBS:.c=$(OBJ_DIR)%.o)
 all: $(NAME)
 
 $(NAME): $(OBJ)
-	@ar rcs $(NAME) $(OBJ)
-	@echo -e "$(GREEN)Libft has been successfully compiled$(RESET)"
+	ar rcs $(NAME) $(OBJ)
+	@echo "$(GREEN)Libft has been successfully compiled$(RESET)"
 
 $(OBJ_DIR)%.o: %.c
 	@mkdir -p $(dir $@)
-	@$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	@rm -rf $(OBJ_DIR)
+	rm -rf $(OBJ_DIR)
 
 fclean: clean
-	@rm -f $(NAME)
+	rm -f $(NAME)
 
 re: fclean all
 
 bonus: $(OBJSBS) $(OBJ)
-	@ar rcs $(NAME) $(OBJSBS) $(OBJ)
-	@echo -e "$(GREEN)Bonus has been successfully compiled$(RESET)"
+	ar rcs $(NAME) $(OBJSBS) $(OBJ)
+	echo "$(GREEN)Bonus has been successfully compiled$(RESET)"
 
 .PHONY: all clean fclean re bonus

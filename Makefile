@@ -1,6 +1,6 @@
 NAME		:= ft_ls
 CC			:= cc
-CFLAGS		:= -Wall -Wextra -Werror -g3 -O2 -fsanitize=address,leak
+CFLAGS		:= -Wall -Wextra -Werror -O2 -fsanitize=address,leak
 SRC_PATH	:= src/
 SRC			:= $(SRC_PATH)main.c \
 			   ${SRC_PATH}parser.c \
@@ -17,22 +17,22 @@ OBJ			:=$(SRC:%.c=$(OBJ_DIR)%.o)
 all: $(NAME)
 
 $(NAME): libft $(OBJ)
-	@$(CC) $(CFLAGS) $(OBJ) $(LIBFT) -o $(NAME)
+	$(CC) $(CFLAGS) $(OBJ) $(LIBFT) -o $(NAME)
 
 $(OBJ_DIR)%.o : %.c
 	@mkdir -p $(dir $@)
-	@$(CC) $(CFLAGS) $(INC) -c $< -o $@
+	$(CC) $(CFLAGS) $(INC) -c $< -o $@
 
 libft:
-	@$(MAKE) -sC $(LIBFT_DIR)
+	$(MAKE) -C $(LIBFT_DIR)
 
 clean:
-	@$(MAKE) -sC $(LIBFT_DIR) clean
-	@rm -rf $(OBJ_DIR)
+	$(MAKE) -C $(LIBFT_DIR) clean
+	rm -rf $(OBJ_DIR)
 
 fclean: clean
-	@$(MAKE) -sC $(LIBFT_DIR) fclean
-	@rm -f $(NAME)
+	$(MAKE) -C $(LIBFT_DIR) fclean
+	rm -f $(NAME)
 
 re: fclean all
 

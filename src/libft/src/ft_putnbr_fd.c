@@ -11,6 +11,7 @@
 /* ************************************************************************** */
 
 #include "../include/libft.h"
+#include <unistd.h>
 
 static int	len_calc_fd(int n)
 {
