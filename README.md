@@ -62,8 +62,3 @@ make fclean
 ├── LICENSE
 ├── README.md
 ```
-
-## Notes
-
-This is a simplified implementation of `ls`, not a full clone of GNU `ls`.
-It is intended for learning and practice in C.
